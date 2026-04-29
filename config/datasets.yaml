@@ -1,0 +1,19 @@
+## Dataset registry for this project.
+# Each entry may contain either:
+# - data_yaml: path to an existing YOLO data yaml, or
+# - images: path to images root containing train/val/test and labels: path to labels root.
+
+bccd:
+  data_yaml: data/bccd.yaml
+
+yolo_dataset:
+  images: data/yolo_dataset/images
+  labels: data/yolo_dataset/labels
+
+all_idb:
+  images: data/raw/all_idb/ALL_IDB Dataset
+  # labels not provided by default for ALL-IDB here; user must create labels or provide data yaml
+
+blood_cells:
+  images: data/blood_cells/dataset-master
+  labels: data/blood_cells/dataset-master/labels

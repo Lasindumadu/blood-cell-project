@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.venv/
+venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Datasets (large files)
+data/raw/
+data/yolo_dataset/
+data/yolo_dataset_aug/
+data/processed/
+
+# Model weights & training artifacts
+*.pt
+*.pth
+runs/
+runs/detect/
+runs/segment/
+
+# Generated outputs
+results/
+reports/
+release.zip
+
+# Cache files
+*.cache
+labels/*.cache
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.pdf
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

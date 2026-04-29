@@ -1,0 +1,97 @@
+% Mini Project Proposal - Automated Blood Cell Classification and Hematological Disorder Detection System
+% Generated draft - replace with your department LaTeX template if provided
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{parskip}
+\usepackage{enumitem}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+\title{Automated Blood Cell Classification and Hematological Disorder Detection System}
+\author{EG/2021/4408 - Arachchi N.A.N.N.N \\ EG/2021/4426 - Bandara A.W.M.L.M \\ EG/2021/4685 - Muthukumari H.M.S \\ EG/2021/4775 - Samarasinghe C Y \
+\\ Department of Electrical and Information Engineering \\ University of Ruhuna}
+\date{January 23, 2026}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\clearpage
+\tableofcontents
+\clearpage
+
+\section{Problem Statement}
+Manual blood smear analysis is labor-intensive, time-consuming, and subject to inter-observer variability. Automated hematology analyzers exist but are expensive and often fail on morphological abnormalities. This project develops an end-to-end pipeline combining classical image processing and YOLOv8-based detection to provide accurate, explainable, and resource-aware blood cell classification and hematological disorder detection.
+
+\section{Objectives}
+\begin{itemize}
+  \item Build a preprocessing pipeline (CLAHE, color transforms, Gaussian filtering) to normalize staining and reduce noise.
+  \item Implement robust cell segmentation (Otsu thresholding, distance transform, marker-controlled watershed) to separate overlapping cells.
+  \item Extract morphological, color, and textural features (area, circularity, nucleus--cytoplasm ratio, GLCM features, LBP) for interpretability.
+  \item Train and fine-tune YOLOv8 (multi-stage protocol) for simultaneous detection and classification of RBCs, WBC subtypes, and platelets.
+  \item Implement rule-based disorder detection logic (e.g., ALL heuristics, anemia indicators) using extracted features and population statistics.
+  \item Produce annotated outputs and an automated clinical-style report (CSV/JSON/PDF) suitable for laboratory use.
+\end{itemize}
+
+\section{Literature Review (summary)}
+We draw on several recent works that apply YOLOv8 variants and hybrid classical+DL pipelines for blood cell detection and classification. Key advances include attention modules (SEAM), specialized convolutions (SPD-Conv/Fasternet), and data augmentation strategies (Mosaic). Gaps remain in cross-dataset generalization and integration of explainable morphological rules with detection results; this project aims to bridge that gap.
+
+\section{Methodology}
+The pipeline follows five main stages:
+\begin{enumerate}
+  \item Image preprocessing and enhancement: RGB$\to$LAB, CLAHE, Gaussian blur.
+  \item Segmentation: Otsu thresholding, distance transform, marker-controlled watershed, morphological cleanup, contour filtering.
+  \item Feature extraction: geometric (area, perimeter, circularity, eccentricity, convexity), nucleus metrics, HSV color stats, GLCM and LBP texture descriptors.
+  \item Deep learning: YOLOv8n (nano) for detection and classification. Multi-stage training (BCCD detection $	o$ single-cell fine-tuning $	o$ pathology fine-tuning).
+  \item Disorder detection: rule-based checks (e.g., lymphoblast percentage, nuclear irregularity thresholds) and aggregate statistics to flag likely conditions.
+\end{enumerate}
+
+\subsection{Training configuration (proposed)}
+\begin{itemize}
+  \item Datasets: BCCD (detection), Blood Cell Images (single-cell classification), ALL-IDB (leukemia validation).
+  \item Input size: 640$\times$640; optimizer: Adam; LR schedule: cosine annealing; early stopping on validation loss.
+  \item Augmentations: rotation $\pm$15°, flips, brightness $\pm$20\%, elastic transforms, Mosaic.
+\end{itemize}
+
+\section{Dataset / Data Collection}
+Primary datasets: BCCD (COCO-style annotations), Blood Cell Images (single-cell), ALL-IDB (blast vs normal). The repository already contains `data/bccd`, `data/yolo_dataset`, and `data/processed` — these will be harmonized into YOLO training folders.
+
+\section{Expected Outcomes}
+\begin{itemize}
+  \item Working prototype that processes a blood smear and produces annotated images and a summary report.
+  \item Trained YOLOv8 weights and segmentation masks for cells.
+  \item Documentation, evaluation metrics (mAP@0.5, Dice for segmentation), sample notebooks/non-interactive demo script.
+\end{itemize}
+
+\section{Implementation Plan and Milestones}
+\begin{description}[leftmargin=!,labelwidth=3cm]
+  \item[Week 1--2] Data curation, preprocessing scripts, segmentation prototype.
+  \item[Week 3--5] YOLOv8 detection training on BCCD and validation.
+  \item[Week 6--8] Fine-tuning with single-cell datasets, feature extraction pipeline implementation.
+  \item[Week 9--10] Disorder detection rules, evaluation across datasets, cross-validation.
+  \item[Week 11--12] Documentation, proposal PDF finalization, demo and final report preparation.
+\end{description}
+
+\section{Evaluation}
+Detection: mAP@0.5; Segmentation: Dice coefficient. Additional metrics: precision/recall per class, confusion matrices, and cross-dataset generalization tests.
+
+\section{Software stack}
+Python 3.9, OpenCV, NumPy, PyTorch 2.x, Ultralytics YOLOv8, scikit-image, matplotlib/seaborn. Use `requirements.txt` in repository as the starting point.
+
+\section{Ethics and Data Use}
+All datasets are publicly available and will be used according to their licenses. Final results are for research/demonstration and must not replace clinical diagnostics.
+
+\section{References}
+% Keep the short references here; add full bib if required by template
+\begin{enumerate}
+  \item Oussama El Othmani, Amine Mosbah, "AI-Driven Automated Blood Cell Anomaly Detection..." (see project references)
+  \item Duong Trong Luong et al., "Detection, classification, and counting blood cells using YOLOv8"
+  \item Xuan Chen et al., "NBCDC-YOLOv8: A new framework to improve blood cell detection"
+  \item Others as cited in project literature review.
+\end{enumerate}
+
+\end{document}

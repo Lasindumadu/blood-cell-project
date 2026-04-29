@@ -1,0 +1,7 @@
+lymph_class: '1'
+lymph_fraction_threshold: 0.2
+blast_like_min: 3
+blast_like_area: 200
+blast_like_circularity: 0.6
+rbc_class: '0'
+rbc_area_threshold: 500

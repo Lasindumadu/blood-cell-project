@@ -1,0 +1,29 @@
+c:/Users/Admin/Desktop/blood_cell_project):
+
+
+.
+├── predict.py
+├── requirements.txt
+├── TODO.md
+├── train_yolo.py
+├── data/
+│   ├── processed/
+│   ├── raw/
+│   │   ├── all_idb/
+│   │   ├── bccd/
+│   │   └── blood_cells/
+│   └── yolo_dataset/
+│       ├── images/
+│       │   └── train/
+│       └── labels/
+│           └── train/
+├── models/
+├── notebooks/
+├── results/
+└── src/
+    ├── convert_coco_to_yolo.py
+    ├── disorder_rules.py
+    ├── features.py
+    ├── preprocessing.py
+    ├── segmentation.py
+    └── utils.py
