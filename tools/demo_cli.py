@@ -18,7 +18,8 @@ from src.pipeline import analyze_image, save_report
 def parse_args():
     p = argparse.ArgumentParser(description="Run full analysis on one image and save results")
     p.add_argument("--image", required=True, help="Path to input image")
-    p.add_argument("--model", default="runs/detect/test_yolo_dataset_stage12/weights/best.pt", help="Path to model weights")
+    # p.add_argument("--model", default="runs/detect/test_yolo_dataset_stage12/weights/best.pt", help="Path to model weights")
+    p.add_argument("--model", default="runs/detect/stage3_combined/weights/best.pt", help="Path to model weights")
 
     p.add_argument("--out", default="results", help="Output folder")
     p.add_argument("--conf", type=float, default=0.25, help="Confidence threshold")

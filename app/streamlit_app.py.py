@@ -16,7 +16,7 @@ st.set_page_config(page_title="Blood Cell Analyzer", layout='wide')
 st.title('Automated Blood Cell Classification and Disorder Detection')
 
 uploaded = st.file_uploader('Upload a blood smear image', type=['jpg', 'jpeg', 'png', 'tif', 'tiff'])
-model_path = st.text_input('Model weights path', value='runs/detect/test_yolo_dataset_stage12/weights/best.pt')
+model_path = st.text_input('Model weights path', value='runs/detect/stage3_combined/weights/best.pt')
 
 # Auto-threshold feature with manual override option
 col1, col2 = st.columns([1, 2])
@@ -44,34 +44,28 @@ def compute_optimal_threshold(image_path, model_path, include_all_contours):
 
     confidences = sorted([b.get('conf', 0) for b in boxes])
 
-    mean_conf = float(np.mean(confidences))
-    std_conf = float(np.std(confidences))
+    mean_conf   = float(np.mean(confidences))
+    std_conf    = float(np.std(confidences))
     median_conf = float(np.median(confidences))
-    min_conf = float(np.min(confidences))
-    max_conf = float(np.max(confidences))
+    min_conf    = float(np.min(confidences))
+    max_conf    = float(np.max(confidences))
 
-    # Method 1: Mean minus half standard deviation
     method1 = mean_conf - 0.5 * std_conf
-
-    # Method 2: Largest gap in confidence scores
     method2 = method1
     if len(confidences) > 1:
         gaps = [confidences[i+1] - confidences[i] for i in range(len(confidences)-1)]
         max_gap_idx = int(np.argmax(gaps))
-        gap_threshold = confidences[max_gap_idx] + 0.3 * gaps[max_gap_idx]
-        method2 = gap_threshold
+        method2 = confidences[max_gap_idx] + 0.3 * gaps[max_gap_idx]
 
-    # Final: use the higher (more conservative) of the two, bounded
-    suggested = max(0.15, min(0.50, max(method1, method2)))
-    suggested = round(suggested, 3)
+    suggested = round(max(0.15, min(0.50, max(method1, method2))), 3)
 
     stats = {
-        'count': len(boxes),
-        'mean': round(mean_conf, 4),
-        'std': round(std_conf, 4),
-        'median': round(median_conf, 4),
-        'min': round(min_conf, 4),
-        'max': round(max_conf, 4),
+        'count':   len(boxes),
+        'mean':    round(mean_conf, 4),
+        'std':     round(std_conf, 4),
+        'median':  round(median_conf, 4),
+        'min':     round(min_conf, 4),
+        'max':     round(max_conf, 4),
         'method1': round(method1, 4),
         'method2': round(method2, 4)
     }
@@ -101,60 +95,84 @@ if uploaded is not None:
     if st.button('Run analysis'):
         final_conf = manual_conf
 
-        # Auto-threshold mode
         if auto_threshold:
             with st.spinner('Analyzing confidence distribution...'):
                 suggested_conf, stats, explanation = compute_optimal_threshold(
                     tfile.name, model_path, include_all
                 )
                 final_conf = suggested_conf
-
                 with st.expander('Threshold Analysis Details', expanded=True):
                     st.markdown(explanation)
-
                     if stats:
-                        # Show metrics
                         m1, m2, m3, m4 = st.columns(4)
-                        m1.metric("Detections", stats['count'])
-                        m2.metric("Mean Conf", f"{stats['mean']:.3f}")
+                        m1.metric("Detections",  stats['count'])
+                        m2.metric("Mean Conf",   f"{stats['mean']:.3f}")
                         m3.metric("Median Conf", f"{stats['median']:.3f}")
-                        m4.metric("Suggested", f"{suggested_conf}")
+                        m4.metric("Suggested",   f"{suggested_conf}")
+            st.info(f'Running at auto-detected threshold: **{final_conf}**')
 
-            st.info(f'Running final analysis at auto-detected threshold: **{final_conf}**')
-
-        # Run final analysis
         with st.spinner('Analyzing...'):
             result = analyze_image(tfile.name, model_path=model_path, conf=final_conf,
-                                  include_all_contours=include_all)
+                                   include_all_contours=include_all)
             out_dir = Path('results')
             out_dir.mkdir(exist_ok=True)
             save_report(result, str(out_dir), Path(uploaded.name).stem)
-            st.image(result['annotated'], caption=f'Annotated result (threshold={final_conf})', use_container_width=True)
+            st.image(result['annotated'],
+                     caption=f'Annotated result (threshold={final_conf})',
+                     use_container_width=True)
 
-            # Show detection table
-            try:
-                boxes = result['summary'].get('boxes', [])
-                if len(boxes) > 0:
-                    rows = []
-                    for i, b in enumerate(boxes):
-                        rows.append({
-                            'box_index': i,
-                            'class_id': b.get('class'),
-                            'class_name': b.get('class_name', ''),
-                            'conf': round(float(b.get('conf', 0)), 4)
-                        })
-                    st.table(rows)
+            # Detection table
+            boxes = result['summary'].get('boxes', [])
+            if boxes:
+                rows = [{'#': i+1,
+                         'class_id':   b.get('class'),
+                         'class_name': b.get('class_name', ''),
+                         'conf':       round(float(b.get('conf', 0)), 4)}
+                        for i, b in enumerate(boxes)]
+                st.table(rows)
+            else:
+                st.warning(f'No detections at threshold {final_conf}. '
+                           'Try lowering the slider or enabling auto-threshold.')
+
+            # Disorder findings
+            st.subheader('Disorder Findings')
+            disorders = result['summary'].get('disorders', {})
+            if isinstance(disorders, list):
+                for d in disorders:
+                    st.error(d)
+            elif isinstance(disorders, dict):
+                all_info = disorders.get('acute_lymphoblastic_leukemia', {})
+                if all_info.get('detected'):
+                    st.error(f"⚠ Suspected ALL detected (confidence {all_info.get('confidence',0):.0%})")
+                    for r in all_info.get('reasons', []):
+                        st.write(f"  • {r}")
                 else:
-                    st.warning(f'No detections at threshold {final_conf}')
-            except Exception as e:
-                st.write('Could not render detection table: ' + str(e))
+                    st.success("✓ No ALL detected")
 
-            st.json(result['summary'])
+                sickle = disorders.get('sickle_cell_disease', {})
+                if sickle.get('detected'):
+                    st.error(f"⚠ Suspected Sickle Cell Disease "
+                             f"(low-circularity RBC fraction: {sickle.get('low_circularity_rbc_fraction',0):.1%})")
+                else:
+                    st.success("✓ No Sickle Cell Disease detected")
+            else:
+                st.success("No disorders detected.")
 
-            # PDF generation
+            # Full JSON
+            with st.expander('Full JSON summary'):
+                st.json(result['summary'])
+
+            # PDF download
             pdf_out = out_dir / f"{Path(uploaded.name).stem}_report.pdf"
-            generate(out_dir / f"{Path(uploaded.name).stem}_annotated.jpg",
-                    out_dir / f"{Path(uploaded.name).stem}_summary.json", pdf_out)
-            with open(pdf_out, 'rb') as f:
-                st.download_button('Download PDF report', data=f, file_name=pdf_out.name,
-                                  mime='application/pdf')
+            try:
+                generate(
+                    out_dir / f"{Path(uploaded.name).stem}_annotated.jpg",
+                    out_dir / f"{Path(uploaded.name).stem}_summary.json",
+                    pdf_out
+                )
+                with open(pdf_out, 'rb') as f:
+                    st.download_button('📄 Download PDF report', data=f,
+                                       file_name=pdf_out.name,
+                                       mime='application/pdf')
+            except Exception as e:
+                st.warning(f'PDF generation failed: {e}')

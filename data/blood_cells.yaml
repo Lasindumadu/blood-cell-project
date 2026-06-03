@@ -1,0 +1,6 @@
+path: data/blood_cells/dataset-master
+train: TRAIN
+val: TEST_SIMPLE
+
+nc: 4
+names: ['eosinophil', 'lymphocyte', 'monocyte', 'neutrophil']

@@ -1,0 +1,6 @@
+path: data/combined
+train: images/train
+val: images/val
+
+nc: 6
+names: ['RBC', 'neutrophil', 'lymphocyte', 'monocyte', 'eosinophil', 'platelet']

@@ -1,55 +1,81 @@
+# # Python
+# __pycache__/
+# *.py[cod]
+# *$py.class
+# *.so
+# .Python
+# *.egg-info/
+# dist/
+# build/
+# .pytest_cache/
+# .venv/
+# venv/
+
+# # IDEs
+# .vscode/
+# .idea/
+# *.swp
+# *.swo
+
+# # Datasets (large files)
+# data/raw/
+# data/yolo_dataset/
+# data/yolo_dataset_aug/
+# data/processed/
+
+# # Model weights & training artifacts
+# *.pt
+# *.pth
+# runs/
+# runs/detect/
+# runs/segment/
+
+# # Generated outputs
+# results/
+# reports/
+# release.zip
+
+# # Cache files
+# *.cache
+# labels/*.cache
+
+# # LaTeX build artifacts
+# *.aux
+# *.log
+# *.out
+# *.toc
+# *.synctex.gz
+# *.fdb_latexmk
+# *.fls
+# *.pdf
+
+# # OS
+# .DS_Store
+# Thumbs.db
+# desktop.ini
+
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-*.egg-info/
-dist/
-build/
-.pytest_cache/
-.venv/
+*.pyc
+*.pyo
 venv/
+.env
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Datasets (large files)
+# Large data — do NOT upload raw images or model weights to GitHub
 data/raw/
-data/yolo_dataset/
-data/yolo_dataset_aug/
-data/processed/
-
-# Model weights & training artifacts
-*.pt
-*.pth
+data/blood_cells/
+data/combined/
+data/yolo_dataset/images/
+data/yolo_dataset/labels/
 runs/
-runs/detect/
-runs/segment/
 
-# Generated outputs
+# But DO keep these small config files
+!data/bccd.yaml
+!data/blood_cells.yaml
+!data/combined.yaml
+
+# Results — keep sample outputs but not everything
 results/
-reports/
-release.zip
-
-# Cache files
-*.cache
-labels/*.cache
-
-# LaTeX build artifacts
-*.aux
-*.log
-*.out
-*.toc
-*.synctex.gz
-*.fdb_latexmk
-*.fls
-*.pdf
-
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
+!results/sample_annotated.jpg
+!results/sample_summary.json
+!results/sample_report.pdf
