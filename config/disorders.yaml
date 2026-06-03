@@ -1,7 +1,34 @@
-lymph_class: '1'
-lymph_fraction_threshold: 0.2
+# Disorder detection thresholds
+# Class mappings match data/bccd.yaml: 0=WBC, 1=RBC, 2=Platelets
+wbc_class: '0'
+rbc_class: '1'
+platelet_class: '2'
+
+# ALL / Leukocytosis detection
+# WBCs > 30% of total cells triggers leukocytosis check
+wbc_fraction_threshold: 0.30
+# Number of blast-like WBC contours needed to flag ALL (proposal §4.6: >10)
 blast_like_min: 3
+# Blast cell: large area and low circularity (irregular nucleus)
 blast_like_area: 200
-blast_like_circularity: 0.6
-rbc_class: '0'
-rbc_area_threshold: 500
+blast_like_circularity: 0.55
+# Nuclear irregularity threshold for blast cell detection (proposal §4.3: >1.4)
+nuclear_irregularity_threshold: 1.4
+# N/C ratio support for blast cell
+nc_ratio_blast_threshold: 0.5
+# Subtype-based ALL: lymphocytes > 20% of WBCs (proposal §4.6)
+lymphocyte_all_fraction: 0.20
+# Eosinophilia: eosinophils > 10% of WBCs
+eosinophil_high_fraction: 0.10
+
+# Anemia / sickle cell detection
+# Microcytic anemia: very small RBC crops (in-crop segmentation area < threshold)
+rbc_area_mean_threshold: 150
+# Sickle cell: very low circularity in the crop contours + high fraction
+# Note: normal RBC crops segment at ~0.3-0.7 circularity; true sickle cells are < 0.20
+rbc_circularity_low: 0.20
+# At least 30% of RBCs must have this extreme low circularity to flag sickle disease
+rbc_sickle_fraction: 0.30
+
+# Thrombocytopenia: abnormally low platelet count
+platelet_rbc_ratio_low: 0.02

@@ -22,6 +22,7 @@ data/raw/
 data/yolo_dataset/
 data/yolo_dataset_aug/
 data/processed/
+data/wbc_cls/
 
 # Model weights & training artifacts
 *.pt

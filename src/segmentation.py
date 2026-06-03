@@ -47,11 +47,15 @@ def segment_cells(image):
     mask = np.zeros_like(gray, dtype=np.uint8)
     mask[markers > 1] = 255
 
-    # Remove small objects
+    # Remove noise (< 100px) and cell clumps (> 5000px) per proposal §4.2
     mask_bool = mask.astype(bool)
-    # Use `max_size` for forward-compatibility with newer scikit-image versions.
-    # Note: `max_size` removes objects smaller than or equal to the value.
-    mask_clean = morphology.remove_small_objects(mask_bool, max_size=100)
-    mask_final = (mask_clean.astype(np.uint8) * 255).astype(np.uint8)
+    mask_clean = morphology.remove_small_objects(mask_bool, max_size=99)
 
+    # Remove oversized regions (likely overlapping cell clumps — flag for review)
+    labeled = measure.label(mask_clean)
+    for region in measure.regionprops(labeled):
+        if region.area > 5000:
+            mask_clean[labeled == region.label] = False
+
+    mask_final = (mask_clean.astype(np.uint8) * 255).astype(np.uint8)
     return mask_final
