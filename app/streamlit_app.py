@@ -74,8 +74,9 @@ with st.sidebar:
         value=DEFAULT_CLASSIFIER_PATH,
         help="Path to YOLOv8 classification model for WBC subtypes (Eosinophil/Lymphocyte/Monocyte/Neutrophil)"
     )
-    conf = st.slider("Confidence threshold", 0.01, 0.95, 0.15, 0.01,
-                     help="Detection confidence cutoff. Lower = more detections (may include noise). Start at 0.15 and adjust.")
+    conf = st.slider("Confidence threshold", 0.01, 0.95, 0.25, 0.01,
+                     help="Detection confidence cutoff (0–1). Lower = more detections but more noise. "
+                          "For this model, 0.25 is the recommended starting point.")
     include_all = st.checkbox("All contours per detection",
                               help="Include all contour features, not just the largest one")
 
@@ -121,22 +122,28 @@ uploaded = st.file_uploader(
 # ---------------------------------------------------------------------------
 
 def auto_threshold(image_path, model_path, include_all_contours):
+    """Find the best confidence threshold for this image.
+
+    Strategy: sort all raw detections by confidence (descending) and pick the
+    threshold that gives the top-N most confident detections, where N is
+    calibrated to a realistic cell count (20–50).  This avoids the noise
+    cluster that sits below ~0.20 for this model.
+    """
     result = analyze_image(image_path, model_path=model_path, conf=0.001,
                            include_all_contours=include_all_contours)
     boxes = result["summary"].get("boxes", [])
     if not boxes:
         return 0.25, None
 
-    confs = sorted(b.get("conf", 0) for b in boxes)
+    confs = sorted((b.get("conf", 0) for b in boxes), reverse=True)
     mean_c = float(np.mean(confs))
-    std_c = float(np.std(confs))
-    m1 = mean_c - 0.5 * std_c
-    m2 = m1
-    if len(confs) > 1:
-        gaps = [confs[i + 1] - confs[i] for i in range(len(confs) - 1)]
-        idx = int(np.argmax(gaps))
-        m2 = confs[idx] + 0.3 * gaps[idx]
-    suggested = round(max(0.15, min(0.50, max(m1, m2))), 3)
+    std_c  = float(np.std(confs))
+
+    # Target: top 20 detections (realistic cells per field of view).
+    # If there are fewer than 20 detections above 0.20, fall back to 0.20.
+    target = min(20, len(confs))
+    raw_suggested = float(confs[target - 1])        # confidence of the Nth best detection
+    suggested = round(max(0.20, min(0.90, raw_suggested)), 2)
 
     stats = {
         "count": len(boxes),
@@ -236,6 +243,19 @@ if uploaded is not None:
         total = sum(int(v) for v in counts.values())
 
         st.divider()
+
+        # --- Confidence distribution hint ---
+        all_confs = [b.get("conf", 0) for b in boxes]
+        if all_confs:
+            min_c = min(all_confs)
+            max_c = max(all_confs)
+            mean_c = sum(all_confs) / len(all_confs)
+            st.info(
+                f"**Detection confidence at threshold {conf}:**  "
+                f"min={min_c:.2f}  max={max_c:.2f}  mean={mean_c:.2f}  "
+                f"— **{len(boxes)} cells shown.**  "
+                f"Raise threshold to reduce noise; lower it to show more cells."
+            )
 
         # --- Annotated image ---
         st.subheader("📷 Detection Result")
