@@ -74,10 +74,25 @@ with st.sidebar:
         value=DEFAULT_CLASSIFIER_PATH,
         help="Path to YOLOv8 classification model for WBC subtypes (Eosinophil/Lymphocyte/Monocyte/Neutrophil)"
     )
-    conf = st.slider("Confidence threshold", 0.01, 0.95, 0.25, 0.01,
-                     help="Detection confidence cutoff")
+    conf = st.slider("Confidence threshold", 0.01, 0.95, 0.15, 0.01,
+                     help="Detection confidence cutoff. Lower = more detections (may include noise). Start at 0.15 and adjust.")
     include_all = st.checkbox("All contours per detection",
                               help="Include all contour features, not just the largest one")
+
+    st.divider()
+
+    # --- Model status indicators ---
+    detection_model_ok = Path(model_path).exists()
+    wbc_model_ok = Path(wbc_cls_path).exists()
+    if detection_model_ok:
+        st.success("✅ Detection model found")
+    else:
+        st.error("❌ Detection model NOT found\nCheck the path above. Without it, no blood cells will be detected.")
+
+    if wbc_model_ok:
+        st.success("✅ WBC subtype model found")
+    else:
+        st.warning("⚠️ WBC subtype model not found\nWBC subtypes (Eosinophil/Lymphocyte/Monocyte/Neutrophil) won't be shown.")
 
     st.divider()
     st.caption("**About**")
@@ -172,6 +187,32 @@ if uploaded is not None:
         summary = result["summary"]
         counts = summary.get("counts", {})
         boxes = summary.get("boxes", [])
+
+        # --- Zero-detection diagnostic ---
+        if len(boxes) == 0:
+            if not Path(model_path).exists():
+                st.error(
+                    f"❌ **Model not found:** `{model_path}`  \n"
+                    "The blood cell detection model was not loaded. "
+                    "Please verify the model path in the sidebar points to a valid `.pt` file."
+                )
+            else:
+                with st.spinner("No cells found at current threshold — scanning to suggest a better value…"):
+                    suggested, stats = auto_threshold(tfile.name, model_path, include_all)
+                if stats and stats["count"] > 0:
+                    st.warning(
+                        f"⚠️ **No cells detected at confidence {conf:.2f}.**  \n"
+                        f"A full scan found **{stats['count']} potential detections** "
+                        f"(mean conf: {stats['mean']}, std: {stats['std']}).  \n"
+                        f"👉 **Try setting the confidence slider to {suggested}** and click Run Analysis again."
+                    )
+                else:
+                    st.error(
+                        "❌ **No detections found even at minimum confidence.**  \n"
+                        "Possible causes: wrong model loaded, image is not a blood smear, "
+                        "or image resolution/staining is very different from the training data."
+                    )
+            st.stop()
         disorders = summary.get("disorders", [])
 
         # Build class-name map from boxes
